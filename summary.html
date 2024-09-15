@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #automatedSummary {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        button {
+            margin-right: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Automated Summary</h1>
+    <button id="generateNormalSummary">Generate Normal Summary</button>
+    <button id="generateClientSummary">Generate Client Summary</button>
+    <div id="automatedSummary"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        class AutomatedSummaryGenerator {
+            constructor() {
+                this.completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+                this.remainingTasks = JSON.parse(localStorage.getItem('remainingTasks') || '[]');
+                this.roadmap = localStorage.getItem('roadmap') || '';
+                this.userEmail = localStorage.getItem('userEmail');
+            }
+
+            sendEmail(summary) {
+                if (!this.userEmail) {
+                    console.error('No email address found');
+                    return;
+                }
+
+                const payload = {
+                    mailaddress: this.userEmail,
+                    mail_subject: "Automated Summary",
+                    mailcontent: summary
+                };
+
+                fetch('https://sad-spence-nice.lemme.cloud/api/6a69d35a-46c1-47c3-a73c-cc403336711d', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.text())
+                .then(data => {
+                    console.log('Email sent successfully');
+                })
+                .catch(error => {
+                    console.error('Error sending email:', error);
+                });
+            }
+
+            generateAutomatedSummary(isClientSummary = false) {
+                const payload = {
+                    completedTasks: this.completedTasks,
+                    remainingTasks: this.remainingTasks,
+                    roadmap: this.roadmap
+                };
+
+                payload.client = isClientSummary;
+
+                fetch('https://sad-spence-nice.lemme.cloud/api/afe409a9-f601-4b7b-8c52-31b30062a293', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('API request failed');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    document.getElementById('automatedSummary').innerHTML = this.formatMarkdown(data);
+                    this.sendEmail(data);  // Send email after generating summary
+                })
+                .catch(error => {
+                    console.error('Error generating automated summary:', error);
+                    document.getElementById('automatedSummary').textContent = 'Failed to generate automated summary. Please try again.';
+                });
+            }
+
+            formatMarkdown(markdown) {
+                return marked.parse(markdown);
+            }
+        }
+
+        const summaryGenerator = new AutomatedSummaryGenerator();
+
+        document.getElementById('generateNormalSummary').addEventListener('click', () => {
+            console.log('Generate Normal Summary button clicked');
+            summaryGenerator.generateAutomatedSummary(false);
+        });
+
+        document.getElementById('generateClientSummary').addEventListener('click', () => {
+            console.log('Generate Client Summary button clicked');
+            summaryGenerator.generateAutomatedSummary(true);
+        });
+    </script>
+</body>
+</html>

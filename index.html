@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Gig</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header>
+        <div class="nav">
+            <a href="#" class="logo">
+                <img src="/WhatsApp Image 2024-09-15 at 11.39.40_594805b9.jpg
+                " alt="logo" />
+            </a>
+            <nav class="navEl">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">About</a>
+                <a href="#" class="nav-link">Sign In</a>
+                <a href="#" class="nav-link">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="hero">
+            <div class="tagLine">Auto Gig: Your Roadmap to Efficiency!!</div>
+            <div class="container">
+                <input type="text" id="project" placeholder="Enter your project">
+                <input type="number" id="timeLimit" placeholder="Enter time limit (days)">
+                <button id="getroad" class="btn">Get Roadmap</button>
+                <div class="road" id="road"></div>
+                <div class="road-intro" id="road-intro" style="display: none;">
+                    <h2>Your Roadmap</h2>
+                    <p>Below is the detailed roadmap for your project. Each card represents a segment of your project with tasks and milestones.</p>
+                </div>
+            </div>
+        </div>
+        <script>
+            let storedRoadmap = null; // Variable to store the roadmap
+
+            function parseMarkdownToDays(markdown) {
+                const days = markdown.split(/(?=^### )/m);
+                return days.filter(day => day.trim() !== '');
+            }
+
+            function formatDay(dayContent) {
+                // Convert headers
+                dayContent = dayContent.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                dayContent = dayContent.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                dayContent = dayContent.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                
+                // Convert bold text
+                dayContent = dayContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // Convert lists
+                let inList = false;
+                dayContent = dayContent.split('\n').map(line => {
+                    if (line.trim().startsWith('- ')) {
+                        if (!inList) {
+                            inList = true;
+                            return '<ul><li>' + line.trim().substring(2) + '</li>';
+                        }
+                        return '<li>' + line.trim().substring(2) + '</li>';
+                    } else if (inList) {
+                        inList = false;
+                        return '</ul>' + line;
+                    }
+                    return line;
+                }).join('\n');
+                
+                if (inList) {
+                    dayContent += '</ul>';
+                }
+                
+                // Preserve remaining line breaks
+                dayContent = dayContent.replace(/\n/g, '<br>');
+                
+                return dayContent;
+            }
+
+            document.getElementById('getroad').addEventListener('click', function() {
+                const project = document.getElementById('project').value;
+                const timeLimit = document.getElementById('timeLimit').value;
+
+                const payload = {
+                    "project": project,
+                    "timeLimit": timeLimit
+                };
+
+                fetch('https://sad-spence-nice.lemme.cloud/api/ceafcf5f-3442-4dcf-a5eb-7e34dba7c79c', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.text())
+                .then(data => {
+                    // Store the roadmap in the variable and localStorage
+                    storedRoadmap = data;
+                    localStorage.setItem('roadmap', data);
+
+                    // Hide the input elements and button
+                    document.querySelectorAll('#project, #timeLimit, #getroad').forEach(el => el.style.display = 'none');
+
+                    // Hide other content
+                    document.querySelector('.hero').style.display = 'none';
+
+                    // Redirect to roadmap.html
+                    window.location.href = 'roadmap.html';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('road').textContent = 'Failed to fetch roadmap. Please try again.';
+                });
+            });
+        </script>
+    </main>
+</body>
+</html>

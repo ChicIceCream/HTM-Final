@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: aliceblue;
+        }
+        #todoList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #todoList li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        #todoList li.done {
+            text-decoration: line-through;
+            color: #888;
+        }
+        #todoList li input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        #summary {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 50px;
+            box-shadow: 3px 6px 6px rgba(0, 0, 0, 0.12);
+        }
+        .nav a {
+            color: inherit;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+        .nav a:hover {
+            border-bottom: 2px solid #00FFFF;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav">
+            <a href="#" class="logo">
+                <img src="" alt="logo" />
+            </a>
+            <nav class="navEl">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">About</a>
+                <a href="summary.html" class="nav-link">Automated Summary</a> <!-- Link to summary.html -->
+                <a href="#" class="nav-link">Sign In</a>
+                <a href="#" class="nav-link">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <h1>To-Do List</h1>
+        <button id="generateTodo" class="btn">Generate Todo List</button>
+        <ul id="todoList"></ul>
+        <button id="generateSummary" class="btn">Generate Summary</button>
+        <div id="summary"></div>
+
+        <script>
+            class TodoListGenerator {
+                constructor() {
+                    this.roadmap = this.getStoredRoadmap();
+                    this.todoList = [];
+                }
+
+                getStoredRoadmap() {
+                    const roadmap = localStorage.getItem('roadmap');
+                    console.log('Retrieved roadmap:', roadmap);
+                    return roadmap || null;
+                }
+
+                generateTodoList() {
+                    console.log('Generate Todo List button clicked');
+                    this.roadmap = this.getStoredRoadmap();
+                    
+                    if (!this.roadmap) {
+                        console.error('No roadmap data available');
+                        alert('No roadmap data available. Please generate a roadmap first.');
+                        return;
+                    }
+
+                    console.log('Sending request to API...');
+                    fetch('https://sad-spence-nice.lemme.cloud/api/126e0600-0869-49a7-be29-92dc7b3c48e5', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "roadmap": this.roadmap
+                        })
+                    })
+                    .then(response => {
+                        console.log('API response received:', response);
+                        if (!response.ok) {
+                            throw new Error('API request failed');
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        console.log('API data:', data);
+                        this.todoList = data.split(',').map(item => item.trim());
+                        this.displayTodoList();
+                    })
+                    .catch(error => {
+                        console.error('Error generating todo list:', error);
+                        alert('Error generating todo list. Please check the console for details.');
+                    });
+                }
+
+                displayTodoList() {
+                    const todoListElement = document.getElementById('todoList');
+                    todoListElement.innerHTML = '';
+
+                    this.todoList.forEach((todo, index) => {
+                        const li = document.createElement('li');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `todo-${index}`;
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = `todo-${index}`;
+                        label.textContent = todo;
+
+                        checkbox.addEventListener('change', () => {
+                            li.classList.toggle('done');
+                        });
+
+                        li.appendChild(checkbox);
+                        li.appendChild(label);
+                        todoListElement.appendChild(li);
+                    });
+                }
+
+                generateSummary() {
+                    const todoItems = document.querySelectorAll('#todoList li');
+                    const completed = [];
+                    const remaining = [];
+
+                    todoItems.forEach(item => {
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        const task = item.querySelector('label').textContent;
+                        if (checkbox.checked) {
+                            completed.push(task);
+                        } else {
+                            remaining.push(task);
+                        }
+                    });
+
+                    // Store completed and remaining tasks in localStorage
+                    localStorage.setItem('completedTasks', JSON.stringify(completed));
+                    localStorage.setItem('remainingTasks', JSON.stringify(remaining));
+
+                    const summaryElement = document.getElementById('summary');
+                    summaryElement.innerHTML = `
+                        <h3>Summary</h3>
+                        <h4>Completed Tasks (${completed.length}):</h4>
+                        <ul>${completed.map(task => `<li>${task}</li>`).join('')}</ul>
+                        <h4>Remaining Tasks (${remaining.length}):</h4>
+                        <ul>${remaining.map(task => `<li>${task}</li>`).join('')}</ul>
+                    `;
+                }
+            }
+
+            const todoGenerator = new TodoListGenerator();
+
+            document.getElementById('generateTodo').addEventListener('click', () => {
+                console.log('Generate Todo button clicked');
+                todoGenerator.generateTodoList();
+            });
+
+            document.getElementById('generateSummary').addEventListener('click', () => {
+                console.log('Generate Summary button clicked');
+                todoGenerator.generateSummary();
+            });
+
+            // Check if the button is properly connected
+            const button = document.getElementById('generateTodo');
+            if (button) {
+                console.log('Generate Todo button found');
+            } else {
+                console.error('Generate Todo button not found');
+            }
+        </script>
+    </main>
+</body>
+</html>

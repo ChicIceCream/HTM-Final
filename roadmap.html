@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roadmap</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* Additional Styling for Roadmap Page */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px; /* Increased width for more space */
+            margin: 0 auto;
+            padding: 0;
+            background-color: #f9f9f9; /* Light background */
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 50px;
+            box-shadow: 3px 6px 6px rgba(0, 0, 0, 0.12);
+            background: #fff; /* Navbar background color */
+        }
+        .nav a {
+            color: inherit;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+        .nav a:hover {
+            border-bottom: 2px solid #00FFFF;
+        }
+        header {
+            margin-bottom: 20px;
+        }
+        .todo-generator {
+            margin: 20px 0; /* Margin around the To-Do Generator section */
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .todo-generator input, .todo-generator button {
+            margin-right: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .todo-generator input[type="text"], .todo-generator input[type="number"] {
+            width: 250px;
+        }
+        .todo-generator button {
+            background-color: #00c1d6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .todo-generator button:hover {
+            background-color: #00a2b5;
+        }
+        .road {
+            margin-top: 20px;
+        }
+        .road-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .road-card {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav">
+            <a href="#" class="logo">
+                <img src="" alt="logo" />
+            </a>
+            <nav class="navEl">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">About</a>
+                <a href="#" class="nav-link">Sign In</a>
+                <a href="#" class="nav-link">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <!-- To-Do Generator Section -->
+        <div class="todo-generator" id="todoGenerator">
+            <h2>To-Do Generator</h2>
+            <input type="text" id="todoProject" placeholder="Enter your task">
+            <input type="number" id="todoPriority" placeholder="Enter priority (1-5)">
+            <button id="generateTodo" class="btn">Generate To-Do</button>
+        </div>
+
+        <!-- Roadmap Content -->
+        <div class="road-intro">
+            <h2>Your Roadmap</h2>
+            <p>Below is the detailed roadmap for your project. Each card represents a segment of your project with tasks and milestones.</p>
+        </div>
+        <div class="road">
+            <!-- Roadmap data will be injected here -->
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roadElement = document.querySelector('.road');
+            const storedRoadmap = localStorage.getItem('roadmap');
+            if (storedRoadmap) {
+                const days = parseMarkdownToDays(storedRoadmap);
+                const columnsContainer = document.createElement('div');
+                columnsContainer.className = 'road-columns';
+
+                days.forEach(day => {
+                    const card = document.createElement('div');
+                    card.className = 'road-card';
+                    card.innerHTML = formatDay(day);
+                    columnsContainer.appendChild(card);
+                });
+
+                roadElement.appendChild(columnsContainer);
+            } else {
+                roadElement.textContent = 'No roadmap data available.';
+            }
+
+            document.getElementById('generateTodo').addEventListener('click', function() {
+                const task = document.getElementById('todoProject').value;
+                const priority = document.getElementById('todoPriority').value;
+
+                const todoPayload = {
+                    "task": task,
+                    "priority": priority
+                };
+
+                localStorage.setItem('todoData', JSON.stringify(todoPayload));
+                window.location.href = 'todo.html';
+            });
+        });
+
+        function parseMarkdownToDays(markdown) {
+            const days = markdown.split(/(?=^### )/m);
+            return days.filter(day => day.trim() !== '');
+        }
+
+        function formatDay(dayContent) {
+            // Convert headers
+            dayContent = dayContent.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            dayContent = dayContent.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            dayContent = dayContent.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            
+            // Convert bold text
+            dayContent = dayContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert lists
+            let inList = false;
+            dayContent = dayContent.split('\n').map(line => {
+                if (line.trim().startsWith('- ')) {
+                    if (!inList) {
+                        inList = true;
+                        return '<ul><li>' + line.trim().substring(2) + '</li>';
+                    }
+                    return '<li>' + line.trim().substring(2) + '</li>';
+                } else if (inList) {
+                    inList = false;
+                    return '</ul>' + line;
+                }
+                return line;
+            }).join('\n');
+            
+            if (inList) {
+                dayContent += '</ul>';
+            }
+            
+            // Preserve remaining line breaks
+            dayContent = dayContent.replace(/\n/g, '<br>');
+            
+            return dayContent;
+        }
+    </script>
+</body>
+</html>
