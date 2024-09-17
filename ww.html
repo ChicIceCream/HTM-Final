@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 min-h-screen text-gray-800">
+    <header class="bg-white shadow-md">
+        <div class="flex justify-between items-center py-4 px-8">
+            <a href="#" class="logo">
+                <img src="/logo.png" alt="logo" class="h-10" />
+            </a>
+            <nav class="space-x-8">
+                <a href="#" class="text-lg font-semibold text-gray-600 hover:text-white">Home</a>
+                <a href="#" class="text-lg font-semibold text-gray-600 hover:text-white">About</a>
+                <a href="#" class="text-lg font-semibold text-gray-600 hover:text-white">Sign In</a>
+                <a href="#" class="text-lg font-semibold text-gray-600 hover:text-white">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto mt-10 px-8">
+        <!-- To-Do Generator Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">To-Do Generator</h2>
+            <div class="flex space-x-4">
+                <input type="text" id="todoProject" placeholder="Enter your task" class="w-full p-2 border border-gray-300 rounded-md">
+                <input type="number" id="todoPriority" placeholder="Enter priority (1-5)" class="w-40 p-2 border border-gray-300 rounded-md">
+                <button id="generateTodo" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition">Generate To-Do</button>
+            </div>
+        </div>
+
+        <!-- Roadmap Content -->
+        <div class="mt-10">
+            <div class="road-intro">
+                <h2 class="text-4xl font-bold text-white mb-2">Your Roadmap</h2>
+                <p class="text-lg text-gray-200 mb-6">Below is the detailed roadmap for your project. Each card represents a segment of your project with tasks and milestones.</p>
+            </div>
+            <div class="road flex flex-wrap gap-6">
+                <!-- Roadmap data will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const roadElement = document.querySelector('.road');
+            const storedRoadmap = localStorage.getItem('roadmap');
+            if (storedRoadmap) {
+                const days = parseMarkdownToDays(storedRoadmap);
+                const columnsContainer = document.createElement('div');
+                columnsContainer.className = 'road-columns';
+
+                days.forEach(day => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 lg:w-1/3';
+                    card.innerHTML = formatDay(day);
+                    columnsContainer.appendChild(card);
+                });
+
+                roadElement.appendChild(columnsContainer);
+            } else {
+                roadElement.textContent = 'No roadmap data available.';
+            }
+
+            document.getElementById('generateTodo').addEventListener('click', function () {
+                const task = document.getElementById('todoProject').value;
+                const priority = document.getElementById('todoPriority').value;
+
+                const todoPayload = {
+                    "task": task,
+                    "priority": priority
+                };
+
+                localStorage.setItem('todoData', JSON.stringify(todoPayload));
+                window.location.href = 'todo.html';
+            });
+        });
+
+        function parseMarkdownToDays(markdown) {
+            const days = markdown.split(/(?=^### )/m);
+            return days.filter(day => day.trim() !== '');
+        }
+
+        function formatDay(dayContent) {
+            dayContent = dayContent.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mb-2">$1</h3>');
+            dayContent = dayContent.replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mb-2">$1</h2>');
+            dayContent = dayContent.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mb-2">$1</h1>');
+            dayContent = dayContent.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+
+            let inList = false;
+            dayContent = dayContent.split('\n').map(line => {
+                if (line.trim().startsWith('- ')) {
+                    if (!inList) {
+                        inList = true;
+                        return '<ul class="list-disc pl-5 mb-4"><li>' + line.trim().substring(2) + '</li>';
+                    }
+                    return '<li>' + line.trim().substring(2) + '</li>';
+                } else if (inList) {
+                    inList = false;
+                    return '</ul>' + line;
+                }
+                return line;
+            }).join('\n');
+
+            if (inList) {
+                dayContent += '</ul>';
+            }
+
+            dayContent = dayContent.replace(/\n/g, '<br>');
+            return dayContent;
+        }
+    </script>
+</body>
+
+</html>

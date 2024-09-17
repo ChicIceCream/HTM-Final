@@ -1,120 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auto Gig</title>
-    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom gradient for the background */
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+    </style>
 </head>
-<body>
-    <header>
-        <div class="nav">
-            <a href="#" class="logo">
-                <img src="/WhatsApp Image 2024-09-15 at 11.39.40_594805b9.jpg
-                " alt="logo" />
-            </a>
-            <nav class="navEl">
-                <a href="#" class="nav-link">Home</a>
-                <a href="#" class="nav-link">About</a>
-                <a href="#" class="nav-link">Sign In</a>
-                <a href="#" class="nav-link">Sign Up</a>
-            </nav>
-        </div>
+
+<body class="min-h-screen flex flex-col items-center justify-center text-white">
+    <!-- Title Section -->
+    <header class="text-center mb-8">
+        <h1 class="text-5xl font-bold">Auto Gig</h1>
+        <p class="text-lg mt-2">Streamline your project roadmaps</p>
     </header>
-    <main>
-        <div class="hero">
-            <div class="tagLine">Auto Gig: Your Roadmap to Efficiency!!</div>
-            <div class="container">
-                <input type="text" id="project" placeholder="Enter your project">
-                <input type="number" id="timeLimit" placeholder="Enter time limit (days)">
-                <button id="getroad" class="btn">Get Roadmap</button>
-                <div class="road" id="road"></div>
-                <div class="road-intro" id="road-intro" style="display: none;">
-                    <h2>Your Roadmap</h2>
-                    <p>Below is the detailed roadmap for your project. Each card represents a segment of your project with tasks and milestones.</p>
-                </div>
-            </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons flex space-x-4 mb-8">
+        <button class="nav-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition ease-in-out duration-300" onclick="location.href='summary.html'">Summary</button>
+        <button class="nav-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition ease-in-out duration-300" onclick="location.href='client.html'">Client</button>
+        <button class="nav-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition ease-in-out duration-300" onclick="location.href='email_Sender.html'">Email Sender</button>
+        <button class="nav-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition ease-in-out duration-300" onclick="location.href='todo-list.html'">Todo List</button>
+    </div>
+
+    <!-- Input and Button Section -->
+    <div class="container bg-white rounded-lg p-8 shadow-lg text-gray-800 w-full max-w-md">
+        <div class="mb-4">
+            <input type="text" id="project" placeholder="Enter project ID" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
-        <script>
-            let storedRoadmap = null; // Variable to store the roadmap
+        <div class="mb-4">
+            <input type="number" id="timeLimit" placeholder="Enter time limit (days)" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button id="getroad" class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded w-full transition ease-in-out duration-300">Get Roadmap</button>
+        <div id="road" class="slider-container mt-8 space-y-4"></div>
+    </div>
 
-            function parseMarkdownToDays(markdown) {
-                const days = markdown.split(/(?=^### )/m);
-                return days.filter(day => day.trim() !== '');
-            }
+    <script>
+        let storedRoadmap = null; // Variable to store the roadmap
 
-            function formatDay(dayContent) {
-                // Convert headers
-                dayContent = dayContent.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-                dayContent = dayContent.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-                dayContent = dayContent.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-                
-                // Convert bold text
-                dayContent = dayContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                
-                // Convert lists
-                let inList = false;
-                dayContent = dayContent.split('\n').map(line => {
-                    if (line.trim().startsWith('- ')) {
-                        if (!inList) {
-                            inList = true;
-                            return '<ul><li>' + line.trim().substring(2) + '</li>';
-                        }
-                        return '<li>' + line.trim().substring(2) + '</li>';
-                    } else if (inList) {
-                        inList = false;
-                        return '</ul>' + line;
+        function parseMarkdownToDays(markdown) {
+            const days = markdown.split(/(?=^### )/m);
+            return days.filter(day => day.trim() !== '');
+        }
+
+        function formatDay(dayContent) {
+            // Convert headers
+            dayContent = dayContent.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mb-2">$1</h3>');
+            dayContent = dayContent.replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mb-4">$1</h2>');
+            dayContent = dayContent.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mb-6">$1</h1>');
+            
+            // Convert bold text
+            dayContent = dayContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert lists
+            let inList = false;
+            dayContent = dayContent.split('\n').map(line => {
+                if (line.trim().startsWith('- ')) {
+                    if (!inList) {
+                        inList = true;
+                        return '<ul class="list-disc pl-5"><li>' + line.trim().substring(2) + '</li>';
                     }
-                    return line;
-                }).join('\n');
-                
-                if (inList) {
-                    dayContent += '</ul>';
+                    return '<li>' + line.trim().substring(2) + '</li>';
+                } else if (inList) {
+                    inList = false;
+                    return '</ul>' + line;
                 }
-                
-                // Preserve remaining line breaks
-                dayContent = dayContent.replace(/\n/g, '<br>');
-                
-                return dayContent;
+                return line;
+            }).join('\n');
+            
+            if (inList) {
+                dayContent += '</ul>';
+            }
+            
+            // Preserve remaining line breaks
+            dayContent = dayContent.replace(/\n/g, '<br>');
+            
+            return dayContent;
+        }
+
+        function splitIntoCategories(days, numberOfCategories) {
+            const categorySize = Math.ceil(days.length / numberOfCategories);
+            const categories = [];
+
+            for (let i = 0; i < numberOfCategories; i++) {
+                const category = days.slice(i * categorySize, (i + 1) * categorySize);
+                if (category.length) {
+                    categories.push(category);
+                }
             }
 
-            document.getElementById('getroad').addEventListener('click', function() {
-                const project = document.getElementById('project').value;
-                const timeLimit = document.getElementById('timeLimit').value;
+            return categories;
+        }
 
-                const payload = {
-                    "project": project,
-                    "timeLimit": timeLimit
-                };
+        document.getElementById('getroad').addEventListener('click', function () {
+            const project = document.getElementById('project').value;
+            const timeLimit = document.getElementById('timeLimit').value;
 
-                fetch('https://sad-spence-nice.lemme.cloud/api/ceafcf5f-3442-4dcf-a5eb-7e34dba7c79c', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                })
+            const payload = {
+                "project": project,
+                "timeLimit": timeLimit
+            };
+
+            fetch('https://beautiful-galileo-tender.lemme.cloud/api/9dca1614-37b3-43d8-931b-4879a8fb6b27', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
                 .then(response => response.text())
                 .then(data => {
                     // Store the roadmap in the variable and localStorage
                     storedRoadmap = data;
                     localStorage.setItem('roadmap', data);
 
-                    // Hide the input elements and button
-                    document.querySelectorAll('#project, #timeLimit, #getroad').forEach(el => el.style.display = 'none');
+                    const days = parseMarkdownToDays(data);
+                    const numberOfCategories = days.length <= 3 ? days.length : 4;
+                    const categories = splitIntoCategories(days, numberOfCategories);
 
-                    // Hide other content
-                    document.querySelector('.hero').style.display = 'none';
+                    const roadElement = document.getElementById('road');
+                    roadElement.innerHTML = '';
 
-                    // Redirect to roadmap.html
-                    window.location.href = 'roadmap.html';
+                    categories.forEach((category, index) => {
+                        const categoryElement = document.createElement('div');
+                        categoryElement.className = 'category bg-gray-200 p-4 rounded-lg shadow-lg mb-4';
+                        categoryElement.innerHTML = `<h2 class="text-xl font-bold mb-4">Category ${index + 1}</h2>`;
+                        category.forEach(day => {
+                            const slide = document.createElement('div');
+                            slide.className = 'slide bg-gray-100 p-2 rounded-lg shadow mb-2';
+                            slide.innerHTML = formatDay(day);
+                            categoryElement.appendChild(slide);
+                        });
+                        roadElement.appendChild(categoryElement);
+                    });
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     document.getElementById('road').textContent = 'Failed to fetch roadmap. Please try again.';
                 });
-            });
-        </script>
-    </main>
+        });
+    </script>
 </body>
+
 </html>
